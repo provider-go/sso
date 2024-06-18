@@ -8,7 +8,7 @@ import (
 )
 
 type SSOKey struct {
-	DID        string    `json:"did" gorm:"column:did;type:varchar(100);not null;default:'';comment:'主键'"`
+	DID        string    `json:"did" gorm:"column:did;type:varchar(100);not null;default:'';primary_key;comment:'主键'"`
 	PubKey     string    `json:"pubkey" gorm:"column:pubkey;type:varchar(100);not null;default:'';comment:用户公钥"`         // 用户公钥
 	Status     int       `json:"status" gorm:"column:status;type:tinyint(1);not null;default:0;comment:账号状态:0(正常)1(禁用)"` // 账号状态:0(正常)1(禁用)
 	CreateTime time.Time `json:"create_time" gorm:"autoCreateTime;comment:创建时间"`                                         // 创建时间
