@@ -14,6 +14,7 @@ import (
 )
 
 func LoginByKey(ctx *gin.Context) {
+	var returnDID string
 	json := make(map[string]interface{})
 	_ = ctx.BindJSON(&json)
 	pubkey := output.ParamToString(json["pubkey"])
@@ -35,23 +36,23 @@ func LoginByKey(ctx *gin.Context) {
 	// 对比数据库记录,公钥是否存在
 	item, err := models.ViewSSOKey(pubkey)
 	if err != nil {
-		logger.Error("LoginByKey", "step", "ViewUserKey", "err", err)
-		output.ReturnErrorResponse(ctx, 9999, "系统错误~")
-		return
-	}
-	// 如果不存在则创建新用户
-	var returnDID string
-	if len(item.DID) < 2 {
-		returnDID = hex.EncodeToString([]byte(pubkey))[0:10]
-		err = models.CreateSSOKey(returnDID, pubkey)
-		if err != nil {
-			logger.Error("LoginByKey", "step", "CreateUserKey", "err", err)
+		if err.Error() == "ErrRecordNotFound" {
+			returnDID = hex.EncodeToString([]byte(pubkey))[0:10]
+			err = models.CreateSSOKey(returnDID, pubkey)
+			if err != nil {
+				logger.Error("LoginByKey", "step", "CreateSSOKey", "err", err)
+				output.ReturnErrorResponse(ctx, 9999, "系统错误~")
+				return
+			}
+		} else {
+			logger.Error("LoginByKey", "step", "ViewSSOKey", "err", err)
 			output.ReturnErrorResponse(ctx, 9999, "系统错误~")
 			return
 		}
 	} else {
 		returnDID = item.DID
 	}
+
 	// 生成token
 	token := middleware.InitJwt(global.SecretKey).GenerateToken(returnDID)
 	output.ReturnSuccessResponse(ctx, token)

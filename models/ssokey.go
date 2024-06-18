@@ -1,7 +1,9 @@
 package models
 
 import (
+	"errors"
 	"github.com/provider-go/sso/global"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -42,6 +44,10 @@ func ListSSOKey(pageSize, pageNum int) ([]*SSOKey, int64, error) {
 func ViewSSOKey(pubkey string) (*SSOKey, error) {
 	row := new(SSOKey)
 	if err := global.DB.Table("sso_keys").Where("pubkey = ?", pubkey).First(&row).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// 记录不存在的逻辑处理
+			return nil, errors.New("ErrRecordNotFound")
+		}
 		return nil, err
 	}
 	return row, nil
